@@ -1,0 +1,26 @@
+<div class="chat-page">
+  <div class="chat-logo" (click)="goToHome()">
+    <img src="../../assets/logotaskbot.jpg" alt="TaskBot Logo" />
+  </div>
+
+  <div class="chat-container">
+    <h2>TaskBot 360° Chat</h2>
+
+    <div class="messages">
+      <div *ngFor="let msg of messages" [ngClass]="msg.type">
+        <pre>{{ msg.text }}</pre>
+      </div>
+      <div *ngIf="loading" class="loading">Analyzing…</div>
+    </div>
+
+    <div class="chat-input">
+      <input
+        type="text"
+        [(ngModel)]="userInput"
+        placeholder="Paste your ticket or describe the task (press Enter to send)"
+        (keyup.enter)="sendMessage()"
+      />
+      <button (click)="sendMessage()" [disabled]="loading">Send</button>
+    </div>
+  </div>
+</div>
