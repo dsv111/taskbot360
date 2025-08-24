@@ -9,7 +9,15 @@ import { Router } from '@angular/router';
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
+  user: any;
 constructor(private router: Router) {}
+ngOnInit() {
+    this.user = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+    console.log(this.user,"home user");
+    
+
+}
+
   goToChat() {
     this.router.navigate(['/chat']);
   }

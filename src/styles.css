@@ -1,11 +1,12 @@
 /* You can add global styles to this file, and also import other style files */
-    body{
-    background: url('./assets/landingpage1.jpeg');
-    /* background-size: cover; */
-    background-repeat: no-repeat;
-    background-position: center;
-    background-attachment: fixed;
-    background-size: contain;
-    background-color: #faf9f7;
-    /* background-color: #fcf7f1; */
+    body {
+  /* background: url('./assets/landinguser.jpeg') no-repeat center center fixed; */
+  background: url('./assets/landinuser.jpeg') no-repeat center center fixed;
+  background-size: 70% 100%;
+  background-color: #040e55;
+  background-blend-mode:lighten;
+  margin: 0;
+  
 }
+
+
