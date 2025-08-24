@@ -99,4 +99,30 @@ User ticket:
       `Deliverables:\n${list(a.outputs)}`
     ].join('\n');
   }
+
+   // ================= PROFILE PICTURE ENHANCEMENT =================
+  async enhanceImage(base64Image: string): Promise<string> {
+  try {
+    const model = this.genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+
+    const result = await model.generateContent([
+      { text: "Enhance this photo to look like a professional corporate profile picture. Keep it natural, clean background, and well-lit face." },
+      { inlineData: { mimeType: "image/png", data: base64Image.split(",")[1] } }
+    ]);
+
+    // Try to read enhanced base64 back
+    const enhanced = result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (enhanced) {
+      return `data:image/png;base64,${enhanced}`;
+    }
+
+    return base64Image; // fallback
+  } catch (err) {
+    console.error("Image enhancement failed:", err);
+    return base64Image;
+  }
+}
+
 }
