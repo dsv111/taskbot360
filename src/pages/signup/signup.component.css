@@ -50,5 +50,14 @@ button:hover {
   max-width: 150px;
   border-radius: 50%;
   border: 2px solid #040e55;
-;
+}
+
+.switch-msg {
+  text-align: center;
+  font-size: 14px;
+}
+.switch-msg:hover {
+  text-decoration: underline;
+  cursor: pointer;
+  color: #040e55;
 }

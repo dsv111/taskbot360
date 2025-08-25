@@ -15,8 +15,11 @@ import { CommonModule } from '@angular/common';
 })
 export class SignupComponent {
   signupForm!: FormGroup;
+  loginForm!: FormGroup;
+
   previewUrl: string | null = null;
   isProcessing = false;
+  isUser = false;
 
   constructor(
     private fb: FormBuilder,
@@ -30,6 +33,24 @@ export class SignupComponent {
       gender: ['', Validators.required],
       profilePic: [null, Validators.required]
     });
+
+     // new login form
+  this.loginForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required]
+  });
+  }
+
+  ngOnInit() {
+    // Redirect if already logged in
+const user = localStorage.getItem("loggedInUser");
+console.log(user,"loggedInUser");
+
+if (user) { 
+  this.isUser = true
+  this.router.navigate(['/home']);
+ }  
+
   }
 
   // When user selects profile pic
@@ -62,6 +83,25 @@ export class SignupComponent {
     };
     reader.readAsDataURL(file);
   }
+
+  onLogin() {
+  if (this.loginForm.valid) {
+    const { email, password } = this.loginForm.value;
+    const user = localStorage.getItem("loggedInUser");
+
+    if (user) {
+      const parsedUser = JSON.parse(user);
+      if (parsedUser.email === email && parsedUser.password === password) {
+        this.isUser = true;
+        this.router.navigate(['/home']);
+      } else {
+        alert("Invalid email or password");
+      }
+    } else {
+      alert("No user found. Please sign up first.");
+    }
+  }
+}
 
   // Handle signup
   onSubmit() {
