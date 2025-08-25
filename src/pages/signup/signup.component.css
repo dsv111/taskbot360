@@ -28,7 +28,7 @@ input, select, button {
 }
 
 button {
-  background: #1976d2;
+  background: #040e55;
   color: white;
   font-weight: bold;
   cursor: pointer;
@@ -36,7 +36,9 @@ button {
 }
 
 button:hover {
-  background: #1259a5;
+  /* background: #2d388e; */
+  background: #2d388e;
+    box-shadow: 0 0 6px #040e55;
 }
 
 .preview {
@@ -47,5 +49,6 @@ button:hover {
 .preview img {
   max-width: 150px;
   border-radius: 50%;
-  border: 2px solid #1976d2;
+  border: 2px solid #040e55;
+;
 }

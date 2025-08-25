@@ -20,7 +20,14 @@ messages: { text: string, type: 'user' | 'bot' }[] = [];
   constructor(private ai: AiService,private router:Router) {}
   goToHome() {
     this.router.navigate(['/home']);
+  }
 
+  logout() {
+    // Assuming you have an AuthService to handle logout
+    // Replace with your actual logout logic
+    // For example: this.authService.logout();
+    localStorage.clear(); // Example: Clear local storage
+    this.router.navigate(['/login']); // Redirect to login page
   }
 
   async sendMessage() {

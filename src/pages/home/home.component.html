@@ -26,20 +26,48 @@
 
 </div>
  -->
-<div class="home">
+
+<!-- <div class="home">
   
   <div class="background"></div>
 
   <h1 style="color: white;margin-top: 62px;">Welcome {{ user?.name }} 👋</h1>
-  <!-- Logo on top-left -->
-  <div class="home-logo">
 
+  <div class="home-logo">
     <img src="../../assets/logotaskbot.jpg" width="150px" height="100px" alt="TaskBot Logo" />
   </div>
 
   <div class="robot-container">
   <img [src]="user?.profilePic" class="robot-head" />
-</div>
 
 </div>
+
+</div> -->
+<div class="home">
+
+  <div class="background"></div>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <!-- Logo (already exists, kept untouched) -->
+    <div class="home-logo">
+      <img src="../../assets/logotaskbot.jpg" width="150px" height="100px" alt="TaskBot Logo" />
+    </div>
+
+    <!-- Nav links -->
+    <ul class="nav-links">
+      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="homelink">Home</a></li>
+      <li><a routerLink="/chat" routerLinkActive="active">Task Analyzer</a></li>
+      <li><a (click)="logout()">Logout</a></li>
+    </ul>
+  </div>
+
+  <!-- Page Content -->
+  <h1 style="color: white;margin-top: 62px;">Welcome {{ user?.name }} 👋</h1>
+
+  <div class="robot-container">
+    <img [src]="user?.profilePic" class="robot-head" />
+  </div>
+</div>
+
 

@@ -28,7 +28,7 @@
       <img [src]="previewUrl" alt="Profile Preview" />
     </div>
 
-    <button type="submit" [disabled]="isProcessing">
+    <button type="submit" [disabled]="isProcessing || signupForm.invalid">
       {{ isProcessing ? 'Processing...' : 'Sign Up' }}
     </button>
   </form>

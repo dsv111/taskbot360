@@ -128,3 +128,67 @@ button:hover {
     border-radius: 50%;
     object-fit: cover;
 }
+
+
+/* Navbar container */
+.navbar {
+  display: flex;
+  justify-content: space-between; /* pushes logo left, links right */
+  align-items: center;
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  padding: 0 40px;   /* spacing on both sides */
+  box-sizing: border-box;
+}
+
+/* Nav links */
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.nav-links li {
+  display: inline;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+  font-size: 16px;
+  transition: color 0.3s ease;
+    padding: 6px 10px;
+
+}
+
+.nav-links a:hover,
+.nav-links a.active,.homelink {
+  color: #74ffff;
+  filter: brightness(1.2); /* Slightly brighter for shine effect */
+  box-shadow: 0 0 8px rgba(116, 255, 255, 0.6); /* Subtle glow */
+}
+.nav-links a.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  height: 2px;
+  background: #74ffff;
+  box-shadow: 0 0 6px rgba(116, 255, 255, 0.8);
+}
+
+/* Fix logo so flexbox works properly */
+.home-logo {
+  position: static; /* remove absolute positioning */
+}
+
+
+
+
