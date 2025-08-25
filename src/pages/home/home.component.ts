@@ -33,4 +33,7 @@ export class HomeComponent {
     this.user = null;
     this.router.navigate(['/login']);
   }
+  login(){
+    this.router.navigate(['/login']);
+  }
 }

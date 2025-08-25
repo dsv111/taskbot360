@@ -16,7 +16,7 @@
         <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="homelink">Home</a>
       </li>
       <li *ngIf="!user">
-        <a routerLink="/login" routerLinkActive="active">Login</a>
+        <a routerLink="/login" routerLinkActive="active" (click)="login()">Login</a>
       </li>
 
       <!-- Visible only if user logged in -->
