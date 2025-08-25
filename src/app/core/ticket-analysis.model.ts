@@ -10,13 +10,20 @@ export interface TicketEstimate {
 }
 
 export interface TicketAnalysis {
-  category: TicketCategory;
+  category: string;
   summary: string;
   dos: string[];
   donts: string[];
   dependencies: string[];
-  scenarios: string[];   // edge cases & validations to cover
+  scenarios: string[];
   risks: string[];
-  outputs: string[];     // deliverables/acceptance artifacts
-  estimate: TicketEstimate;
+  outputs: string[];
+  estimate: {
+    unit: 'hours' | 'days';
+    value: number;
+    confidence: number;
+    notes: string;
+  };
+  breakdown: { step: string; unit: 'hours' | 'days'; value: number }[]; // ⬅ added
 }
+

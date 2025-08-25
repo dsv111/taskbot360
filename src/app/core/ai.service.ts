@@ -8,8 +8,8 @@ export class AiService {
   private genAI = new GoogleGenerativeAI(environment.geminiApiKey);
 
   // System-style guidance + schema instruction
-  private buildPrompt(userText: string): string {
-    return `
+private buildPrompt(userText: string): string {
+  return `
 You are an expert software project analyst. Analyze the user's ticket/task text and
 return a strict JSON object (no markdown, no code fences) with fields:
 
@@ -22,7 +22,11 @@ return a strict JSON object (no markdown, no code fences) with fields:
   "scenarios": ["..."],
   "risks": ["..."],
   "outputs": ["..."],
-  "estimate": { "unit": "hours|days", "value": 1, "confidence": 0.0, "notes": "..." }
+  "estimate": { "unit": "hours|days", "value": 1, "confidence": 0.0, "notes": "..." },
+  "breakdown": [
+    { "step": "task name", "unit": "hours|days", "value": 1 },
+    { "step": "another task", "unit": "hours|days", "value": 2 }
+  ]
 }
 
 Classification hints:
@@ -34,10 +38,12 @@ Classification hints:
 - Security: authn/z, secrets, compliance, data protection.
 - Data: ETL, analytics, reporting, exports.
 
-Make the advice concrete and concise. Estimate conservatively for an average engineer.
+Make the advice concrete and concise. 
+Ensure breakdown matches the total estimate (sum of breakdown = estimate.value).
 User ticket:
 """${userText}"""`;
-  }
+}
+
 
   async analyzeTicket(userText: string): Promise<TicketAnalysis> {
     const model = this.genAI.getGenerativeModel({
@@ -71,34 +77,44 @@ User ticket:
         scenarios: [],
         risks: [],
         outputs: [],
-        estimate: { unit: 'hours', value: 4, confidence: 0.3, notes: 'Fallback (model returned non-JSON)' }
+        estimate: { unit: 'hours', value: 4, confidence: 0.3, notes: 'Fallback (model returned non-JSON)' },
+        breakdown: [
+          { step: 'General analysis', unit: 'hours', value: 4 }
+        ]
       };
     }
   }
 
   // Optional: format analysis to a readable message for the chat UI
-  formatForChat(a: TicketAnalysis): string {
-    const est = `${a.estimate.value} ${a.estimate.unit} (confidence ${(a.estimate.confidence * 100).toFixed(0)}%)`;
-    const list = (arr: string[]) => arr?.length ? arr.map(i => `• ${i}`).join('\n') : '• —';
-    return [
-      `Category: ${a.category.toUpperCase()}`,
-      `Estimate: ${est}`,
-      ``,
-      `Summary:\n${a.summary}`,
-      ``,
-      `Do's:\n${list(a.dos)}`,
-      ``,
-      `Don'ts:\n${list(a.donts)}`,
-      ``,
-      `Dependencies:\n${list(a.dependencies)}`,
-      ``,
-      `Scenarios to cover:\n${list(a.scenarios)}`,
-      ``,
-      `Risks:\n${list(a.risks)}`,
-      ``,
-      `Deliverables:\n${list(a.outputs)}`
-    ].join('\n');
-  }
+formatForChat(a: TicketAnalysis): string {
+  const est = `${a.estimate.value} ${a.estimate.unit} (confidence ${(a.estimate.confidence * 100).toFixed(0)}%)`;
+  const list = (arr: string[]) => arr?.length ? arr.map(i => `• ${i}`).join('\n') : '• —';
+  const breakdown = a.breakdown?.length
+    ? a.breakdown.map(b => `• ${b.step}: ${b.value} ${b.unit}`).join('\n')
+    : '• —';
+
+  return [
+    `Category: ${a.category.toUpperCase()}`,
+    `Estimate: ${est}`,
+    ``,
+    `Summary:\n${a.summary}`,
+    ``,
+    `Do's:\n${list(a.dos)}`,
+    ``,
+    `Don'ts:\n${list(a.donts)}`,
+    ``,
+    `Dependencies:\n${list(a.dependencies)}`,
+    ``,
+    `Scenarios to cover:\n${list(a.scenarios)}`,
+    ``,
+    `Risks:\n${list(a.risks)}`,
+    ``,
+    `Deliverables:\n${list(a.outputs)}`,
+    ``,
+    `Breakdown:\n${breakdown}`
+  ].join('\n');
+}
+
 
    // ================= PROFILE PICTURE ENHANCEMENT =================
   async enhanceImage(base64Image: string): Promise<string> {
