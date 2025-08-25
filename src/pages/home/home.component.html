@@ -1,73 +1,38 @@
-<!-- 
-<div class="home">
-  <div class="home-logo">
-    <img src="../../assets/logotaskbot.jpg" width="150px" height="100px" alt="Ticket360 Logo" />
-  </div>
-
-  <h1 style="text-shadow: 0px 1px #0f0f0f;">Welcome to TaskBot 360°</h1>
-  <p>Your AI-powered ticket analyzer and assistant.</p>
-   <button class="cssbuttons-io-button" (click)="goToChat()">
-  Start Ticket Analysis
-  <div class="icon">
-    <svg
-      height="24"
-      width="24"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M0 0h24v24H0z" fill="none"></path>
-      <path
-        d="M16.172 11l-5.364-5.364 1.414-1.414L20 12l-7.778 7.778-1.414-1.414L16.172 13H4v-2z"
-        fill="currentColor"
-      ></path>
-    </svg>
-  </div>
-</button>
-
-</div>
- -->
-
-<!-- <div class="home">
-  
-  <div class="background"></div>
-
-  <h1 style="color: white;margin-top: 62px;">Welcome {{ user?.name }} 👋</h1>
-
-  <div class="home-logo">
-    <img src="../../assets/logotaskbot.jpg" width="150px" height="100px" alt="TaskBot Logo" />
-  </div>
-
-  <div class="robot-container">
-  <img [src]="user?.profilePic" class="robot-head" />
-
-</div>
-
-</div> -->
 <div class="home">
 
   <div class="background"></div>
 
   <!-- Navbar -->
   <div class="navbar">
-    <!-- Logo (already exists, kept untouched) -->
+    <!-- Logo -->
     <div class="home-logo">
       <img src="../../assets/logotaskbot.jpg" width="150px" height="100px" alt="TaskBot Logo" />
     </div>
 
     <!-- Nav links -->
     <ul class="nav-links">
-      <li><a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="homelink">Home</a></li>
-      <li><a routerLink="/chat" routerLinkActive="active">Task Analyzer</a></li>
-      <li><a (click)="logout()">Logout</a></li>
+      <!-- Always visible -->
+      <li>
+        <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="homelink">Home</a>
+      </li>
+      <li *ngIf="!user">
+        <a routerLink="/login" routerLinkActive="active">Login</a>
+      </li>
+
+      <!-- Visible only if user logged in -->
+      <ng-container *ngIf="user">
+        <li><a routerLink="/chat" routerLinkActive="active">Task Analyzer</a></li>
+        <li><a (click)="logout()">Logout</a></li>
+      </ng-container>
     </ul>
   </div>
 
   <!-- Page Content -->
-  <h1 style="color: white;margin-top: 62px;">Welcome {{ user?.name }} 👋</h1>
+  <h1 style="color: white;margin-top: 62px;">
+    Welcome {{ user?.name || 'Guest' }} 👋
+  </h1>
 
   <div class="robot-container">
-    <img [src]="user?.profilePic" class="robot-head" />
+    <img [src]="user?.profilePic || '../../assets/default-avatar.png'" class="robot-head" />
   </div>
 </div>
-
-

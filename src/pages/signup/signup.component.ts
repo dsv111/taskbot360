@@ -7,9 +7,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [ CommonModule,
-    FormsModule,
-    ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './signup.component.html',
   styleUrl: './signup.component.css'
 })
@@ -19,7 +17,7 @@ export class SignupComponent {
 
   previewUrl: string | null = null;
   isProcessing = false;
-  isUser = false;
+  isUser = true; // 👈 default to signup view
 
   constructor(
     private fb: FormBuilder,
@@ -34,26 +32,21 @@ export class SignupComponent {
       profilePic: [null, Validators.required]
     });
 
-     // new login form
-  this.loginForm = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
-  });
+    this.loginForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required]
+    });
   }
 
   ngOnInit() {
-    // Redirect if already logged in
-const user = localStorage.getItem("loggedInUser");
-console.log(user,"loggedInUser");
-
-if (user) { 
-  this.isUser = true
-  this.router.navigate(['/home']);
- }  
-
+    // If already logged in (sessionStorage)
+    const loggedInUser = sessionStorage.getItem("loggedInUser");
+    if (loggedInUser) {
+      this.router.navigate(['/home']);
+    }
   }
 
-  // When user selects profile pic
+  // Profile pic upload
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -61,7 +54,6 @@ if (user) {
     }
   }
 
-  // AI Enhancement logic
   async uploadAndEnhance(file: File) {
     const reader = new FileReader();
     reader.onload = async (e: any) => {
@@ -69,7 +61,6 @@ if (user) {
       this.isProcessing = true;
 
       try {
-        // Enhance via AI
         const enhancedPic = await this.aiService.enhanceImage(base64Image);
         this.previewUrl = enhancedPic;
         this.signupForm.patchValue({ profilePic: enhancedPic });
@@ -84,38 +75,50 @@ if (user) {
     reader.readAsDataURL(file);
   }
 
-  onLogin() {
-  if (this.loginForm.valid) {
-    const { email, password } = this.loginForm.value;
-    const user = localStorage.getItem("loggedInUser");
-
-    if (user) {
-      const parsedUser = JSON.parse(user);
-      if (parsedUser.email === email && parsedUser.password === password) {
-        this.isUser = true;
-        this.router.navigate(['/home']);
-      } else {
-        alert("Invalid email or password");
-      }
-    } else {
-      alert("No user found. Please sign up first.");
-    }
-  }
-}
-
-  // Handle signup
+  // Signup (store in localStorage list)
   onSubmit() {
     if (this.signupForm.valid) {
-      const userData = this.signupForm.value;
+      const newUser = this.signupForm.value;
 
-      // Save user to localStorage (mock backend)
-      localStorage.setItem("loggedInUser", JSON.stringify(userData));
+      // Get existing users
+      let users = JSON.parse(localStorage.getItem("users") || "[]");
 
-      // Navigate to home page
+      // Check if email already exists
+      if (users.some((u: any) => u.email === newUser.email)) {
+        alert("User with this email already exists. Please login.");
+        this.isUser = false; // switch to login
+        return;
+      }
+
+      // Add new user
+      users.push(newUser);
+      localStorage.setItem("users", JSON.stringify(users));
+
+      // Set as logged in (sessionStorage)
+      sessionStorage.setItem("loggedInUser", JSON.stringify(newUser));
+
       this.router.navigate(['/home']);
     } else {
       alert("Please fill all mandatory fields");
     }
   }
 
+  // Login (check from localStorage)
+  onLogin() {
+    if (this.loginForm.valid) {
+      const { email, password } = this.loginForm.value;
+      let users = JSON.parse(localStorage.getItem("users") || "[]");
+
+      const matchedUser = users.find(
+        (u: any) => u.email === email && u.password === password
+      );
+
+      if (matchedUser) {
+        sessionStorage.setItem("loggedInUser", JSON.stringify(matchedUser));
+        this.router.navigate(['/home']);
+      } else {
+        alert("Invalid email or password");
+      }
+    }
+  }
 }

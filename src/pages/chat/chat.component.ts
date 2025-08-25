@@ -13,21 +13,33 @@ import { Router } from '@angular/router';
   styleUrl: './chat.component.css'
 })
 export class ChatComponent {
-messages: { text: string, type: 'user' | 'bot' }[] = [];
+  messages: { text: string, type: 'user' | 'bot' }[] = [];
   userInput = '';
   loading = false;
+  user: any = null;
 
-  constructor(private ai: AiService,private router:Router) {}
+  constructor(private ai: AiService, private router: Router) {}
+
+  ngOnInit() {
+    // ✅ check session login
+    const storedUser = sessionStorage.getItem("loggedInUser");
+    if (!storedUser) {
+      // not logged in → redirect
+      this.router.navigate(['/login']);
+    } else {
+      this.user = JSON.parse(storedUser);
+    }
+  }
+
   goToHome() {
     this.router.navigate(['/home']);
   }
 
   logout() {
-    // Assuming you have an AuthService to handle logout
-    // Replace with your actual logout logic
-    // For example: this.authService.logout();
-    localStorage.clear(); // Example: Clear local storage
-    this.router.navigate(['/login']); // Redirect to login page
+    // ✅ clear session only
+    sessionStorage.removeItem("loggedInUser");
+    this.user = null;
+    this.router.navigate(['/login']);
   }
 
   async sendMessage() {
@@ -44,11 +56,12 @@ messages: { text: string, type: 'user' | 'bot' }[] = [];
       this.messages.push({ text: reply, type: 'bot' });
     } catch (e) {
       console.error(e);
-      this.messages.push({ text: '⚠️ Sorry, I could not analyze that. Please try again.', type: 'bot' });
+      this.messages.push({
+        text: '⚠️ Sorry, I could not analyze that. Please try again.',
+        type: 'bot'
+      });
     } finally {
       this.loading = false;
     }
   }
-
-
 }

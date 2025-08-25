@@ -1,5 +1,26 @@
 <div *ngIf="isUser; else notUser" class="signup-container">
-  <h2>Create Account</h2>
+ <div class="signup-container">
+    <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
+      <label>Email:</label>
+      <input type="email" formControlName="email" placeholder="Enter your email" />
+
+      <label>Password:</label>
+      <input type="password" formControlName="password" placeholder="Enter your password" />
+
+      <button type="submit" [disabled]="loginForm.invalid || isProcessing">
+        {{ isProcessing ? 'Logging in...' : 'Login' }}
+      </button>
+    </form>
+    <div class="switch-msg" (click)="isUser = false">
+      Don’t have an account? Sign Up
+    </div>
+  </div>
+</div>
+
+<ng-template #notUser>
+  
+<div class="signup-container">
+   <h2>Create Account</h2>
 
   <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
     <label>Name:</label>
@@ -33,22 +54,4 @@
     </button>
   </form>
 </div>
-
-<ng-template #notUser>
-  <div class="signup-container">
-    <form [formGroup]="loginForm" (ngSubmit)="onLogin()">
-      <label>Email:</label>
-      <input type="email" formControlName="email" placeholder="Enter your email" />
-
-      <label>Password:</label>
-      <input type="password" formControlName="password" placeholder="Enter your password" />
-
-      <button type="submit" [disabled]="loginForm.invalid || isProcessing">
-        {{ isProcessing ? 'Logging in...' : 'Login' }}
-      </button>
-    </form>
-    <div class="switch-msg" (click)="isUser = true">
-      Don’t have an account? Sign Up
-    </div>
-  </div>
 </ng-template>
