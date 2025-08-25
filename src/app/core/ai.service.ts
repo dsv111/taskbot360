@@ -108,9 +108,10 @@ User ticket:
     });
 
     const result = await model.generateContent([
-      { text: "Enhance this photo to look like a professional corporate profile picture. Keep it natural, clean background, and well-lit face." },
+      { text: "Remove the background from this image and return a clean, circular-ready headshot with transparent background (PNG)." },
       { inlineData: { mimeType: "image/png", data: base64Image.split(",")[1] } }
     ]);
+
 
     // Try to read enhanced base64 back
     const enhanced = result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
