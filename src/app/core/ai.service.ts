@@ -7,7 +7,6 @@ import { TicketAnalysis } from './ticket-analysis.model';
 export class AiService {
   private genAI = new GoogleGenerativeAI(environment.geminiApiKey);
 
-  // System-style guidance + schema instruction
   private buildPrompt(userText: string): string {
     return `
 You are an expert software project analyst. Analyze the user's ticket/task text and
@@ -44,12 +43,83 @@ User ticket:
 """${userText}"""`;
   }
 
+  private buildClarificationPrompt(userQuestion: string, previousResponse: string, history: string, ticketId: string): string {
+    return `
+You are an expert software project analyst. The user has asked a follow-up question or seeks clarification about a previous ticket analysis. Below is the conversation history, previous analysis, and the user's question. Provide a concise, conversational response that directly addresses the user's question, referencing the previous analysis where relevant. Do not generate a new ticket analysis unless explicitly requested. Return plain text, not JSON or a full analysis format.
+
+Conversation history (last few messages):
+"""
+${history}
+"""
+
+Previous analysis:
+"""
+${previousResponse}
+"""
+
+User's question:
+"""
+${userQuestion}
+"""
+
+Ticket ID: ${ticketId}
+`;
+  }
+
+  private buildIntentPrompt(userInput: string, history: string): string {
+    return `
+Classify the user's input as either:
+- "new_ticket": If it's a new task description, ticket, or unrelated to prior messages.
+- "clarification": If it's a question, doubt, follow-up, or reference to previous analysis (e.g., asking about time, risks, or modifications).
+
+Return ONLY the classification as plain text: "new_ticket" or "clarification". No explanations.
+
+Conversation history (last few messages):
+"""
+${history}
+"""
+
+User input:
+"""
+${userInput}
+"""`;
+  }
+
+  async detectIntent(userInput: string, history: string): Promise<'new_ticket' | 'clarification'> {
+    const model = this.genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        temperature: 0.1, // Low for deterministic classification
+        maxOutputTokens: 10,
+        responseMimeType: 'text/plain',
+      },
+    });
+
+    const prompt = this.buildIntentPrompt(userInput, history);
+    const result = await model.generateContent(prompt);
+    const intent = result.response.text().trim().toLowerCase();
+
+    return intent.includes('clarification') ? 'clarification' : 'new_ticket';
+  }
+  async clarifyResponse(userQuestion: string, previousResponse: string, history: string, ticketId: string): Promise<string> {
+    const model = this.genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: {
+        temperature: 0.5,
+        topP: 0.9,
+        maxOutputTokens: 512,
+        responseMimeType: 'text/plain',
+      },
+    });
+
+    const prompt = this.buildClarificationPrompt(userQuestion, previousResponse, history, ticketId);
+    const result = await model.generateContent(prompt);
+    return result.response.text().trim();
+  }
+
   async analyzeTicket(userText: string): Promise<TicketAnalysis> {
     const model = this.genAI.getGenerativeModel({
-      // Free & fast for MVP; you can switch to 1.5-pro later
       model: 'gemini-1.5-flash',
-      // Ask Gemini to return JSON directly
-      // (supported in newer SDKs; falls back to text if unavailable)
       generationConfig: {
         temperature: 0.3,
         topP: 0.9,
@@ -66,7 +136,6 @@ User ticket:
       const parsed = JSON.parse(text) as TicketAnalysis;
       return parsed;
     } catch {
-      // Fallback if model ignored JSON instruction
       return {
         category: 'other',
         summary: text.slice(0, 500),
@@ -87,28 +156,23 @@ User ticket:
     }
   }
 
-  // Optional: format analysis to a readable message for the chat UI
-  // ================= FORMAT FOR CHAT =================
   formatForChat(a: TicketAnalysis): string {
     const est = `${a.estimate.value} ${a.estimate.unit} (confidence ${(
       a.estimate.confidence * 100
     ).toFixed(0)}%)`;
 
-    // ✅ Helper: format arrays into bullet lists
     const list = (arr: string[]) =>
       arr?.length ? arr.map((i) => `• ${i.trim()}`).join('\n') : '• —';
 
-    // ✅ Helper: format breakdown
     const breakdown = a.breakdown?.length
       ? a.breakdown.map((b) => `• ${b.step}: ${b.value} ${b.unit}`).join('\n')
       : '• —';
 
-    // ✅ Format summary into bullet points (split by ". ")
     const formattedSummary = a.summary
       ? a.summary
-          .split(/\. +/) // split sentences
-          .filter((s) => s.trim().length > 0) // remove empties
-          .map((s) => `• ${s.trim()}.`) // bullet + re-add period
+          .split(/\. +/)
+          .filter((s) => s.trim().length > 0)
+          .map((s) => `• ${s.trim()}.`)
           .join('\n')
       : '• —';
 
@@ -134,7 +198,6 @@ User ticket:
     ].join('\n');
   }
 
-  // ================= PROFILE PICTURE ENHANCEMENT =================
   async enhanceImage(base64Image: string): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
@@ -153,21 +216,19 @@ User ticket:
         },
       ]);
 
-      // Try to read enhanced base64 back
       const enhanced =
         result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (enhanced) {
         return `data:image/png;base64,${enhanced}`;
       }
 
-      return base64Image; // fallback
+      return base64Image;
     } catch (err) {
       console.error('Image enhancement failed:', err);
       return base64Image;
     }
   }
 
-  // ================= IMAGE TO TEXT EXTRACTION =================
   async extractTextFromImage(base64Image: string): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
