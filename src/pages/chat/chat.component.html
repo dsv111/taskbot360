@@ -19,7 +19,7 @@
 
           <!-- Normal user/bot text -->
           <!-- <pre *ngSwitchDefault>{{ msg.text }}</pre> -->
-           <div *ngSwitchDefault class="bot-text">{{ msg.text }}</div>
+          <div *ngSwitchDefault class="bot-text">{{ msg.text }}</div>
 
 
           <!-- Extracted Text Style -->
@@ -40,16 +40,33 @@
 
     <div class="chat-input">
       <!-- File input -->
-      <label class="file-upload">
-        <!-- 📎 -->
+      <!-- <label class="file-upload">
         <img src="../../assets/fileupload.png" alt="Upload" width="40" />
         <input type="file" (change)="onImageUpload($event)" />
-      </label>
+      </label> -->
+      <div class="tooltip-container">
+        <label class="file-upload">
+          <img src="../../assets/fileupload.png" alt="Upload" width="40" />
+          <input type="file" (change)="onImageUpload($event)" />
+        </label>
+        <span class="tooltip-text">Attach file</span>
+      </div>
 
       <!-- Text input -->
       <input type="text" [(ngModel)]="userInput"
         placeholder="Paste your ticket or describe the task (press Enter to send)" (keyup.enter)="sendMessage()" />
       <button (click)="sendMessage()" [disabled]="loading" class="btn">Send</button>
+
+      <!-- Plus icon with tooltip -->
+      <div class="tooltip-container">
+        <span class="plus-icon" (click)="onPlusClick()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </span>
+        <span class="tooltip-text">New Chat</span>
+      </div>
     </div>
   </div>
 </div>

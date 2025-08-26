@@ -139,4 +139,11 @@ export class ChatComponent implements AfterViewChecked {
 
     reader.readAsDataURL(file);
   }
+
+  onPlusClick() {
+  this.messages = []; // Clear current chat
+  this.currentTicketId = null; // Reset ticket ID
+  this.userInput = ''; // Clear input
+  console.log('New chat started.');
+}
 }
