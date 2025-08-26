@@ -8,8 +8,8 @@ export class AiService {
   private genAI = new GoogleGenerativeAI(environment.geminiApiKey);
 
   // System-style guidance + schema instruction
-private buildPrompt(userText: string): string {
-  return `
+  private buildPrompt(userText: string): string {
+    return `
 You are an expert software project analyst. Analyze the user's ticket/task text and
 return a strict JSON object (no markdown, no code fences) with fields:
 
@@ -42,8 +42,7 @@ Make the advice concrete and concise.
 Ensure breakdown matches the total estimate (sum of breakdown = estimate.value).
 User ticket:
 """${userText}"""`;
-}
-
+  }
 
   async analyzeTicket(userText: string): Promise<TicketAnalysis> {
     const model = this.genAI.getGenerativeModel({
@@ -55,8 +54,8 @@ User ticket:
         temperature: 0.3,
         topP: 0.9,
         maxOutputTokens: 2048,
-        responseMimeType: 'application/json'
-      }
+        responseMimeType: 'application/json',
+      },
     });
 
     const prompt = this.buildPrompt(userText);
@@ -77,69 +76,120 @@ User ticket:
         scenarios: [],
         risks: [],
         outputs: [],
-        estimate: { unit: 'hours', value: 4, confidence: 0.3, notes: 'Fallback (model returned non-JSON)' },
-        breakdown: [
-          { step: 'General analysis', unit: 'hours', value: 4 }
-        ]
+        estimate: {
+          unit: 'hours',
+          value: 4,
+          confidence: 0.3,
+          notes: 'Fallback (model returned non-JSON)',
+        },
+        breakdown: [{ step: 'General analysis', unit: 'hours', value: 4 }],
       };
     }
   }
 
   // Optional: format analysis to a readable message for the chat UI
-formatForChat(a: TicketAnalysis): string {
-  const est = `${a.estimate.value} ${a.estimate.unit} (confidence ${(a.estimate.confidence * 100).toFixed(0)}%)`;
-  const list = (arr: string[]) => arr?.length ? arr.map(i => `• ${i}`).join('\n') : '• —';
-  const breakdown = a.breakdown?.length
-    ? a.breakdown.map(b => `• ${b.step}: ${b.value} ${b.unit}`).join('\n')
-    : '• —';
+  // ================= FORMAT FOR CHAT =================
+  formatForChat(a: TicketAnalysis): string {
+    const est = `${a.estimate.value} ${a.estimate.unit} (confidence ${(
+      a.estimate.confidence * 100
+    ).toFixed(0)}%)`;
 
-  return [
-    `Category: ${a.category.toUpperCase()}`,
-    `Estimate: ${est}`,
-    ``,
-    `Summary:\n${a.summary}`,
-    ``,
-    `Do's:\n${list(a.dos)}`,
-    ``,
-    `Don'ts:\n${list(a.donts)}`,
-    ``,
-    `Dependencies:\n${list(a.dependencies)}`,
-    ``,
-    `Scenarios to cover:\n${list(a.scenarios)}`,
-    ``,
-    `Risks:\n${list(a.risks)}`,
-    ``,
-    `Deliverables:\n${list(a.outputs)}`,
-    ``,
-    `Breakdown:\n${breakdown}`
-  ].join('\n');
-}
+    // ✅ Helper: format arrays into bullet lists
+    const list = (arr: string[]) =>
+      arr?.length ? arr.map((i) => `• ${i.trim()}`).join('\n') : '• —';
 
+    // ✅ Helper: format breakdown
+    const breakdown = a.breakdown?.length
+      ? a.breakdown.map((b) => `• ${b.step}: ${b.value} ${b.unit}`).join('\n')
+      : '• —';
 
-   // ================= PROFILE PICTURE ENHANCEMENT =================
-  async enhanceImage(base64Image: string): Promise<string> {
-  try {
-    const model = this.genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    });
+    // ✅ Format summary into bullet points (split by ". ")
+    const formattedSummary = a.summary
+      ? a.summary
+          .split(/\. +/) // split sentences
+          .filter((s) => s.trim().length > 0) // remove empties
+          .map((s) => `• ${s.trim()}.`) // bullet + re-add period
+          .join('\n')
+      : '• —';
 
-    const result = await model.generateContent([
-      { text: "Remove the background from this image and return a clean, circular-ready headshot with transparent background (PNG)." },
-      { inlineData: { mimeType: "image/png", data: base64Image.split(",")[1] } }
-    ]);
-
-
-    // Try to read enhanced base64 back
-    const enhanced = result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (enhanced) {
-      return `data:image/png;base64,${enhanced}`;
-    }
-
-    return base64Image; // fallback
-  } catch (err) {
-    console.error("Image enhancement failed:", err);
-    return base64Image;
+    return [
+      `Category: ${a.category.toUpperCase()}`,
+      `Estimate: ${est}`,
+      ``,
+      `Summary:\n${formattedSummary}`,
+      ``,
+      `Do's:\n${list(a.dos)}`,
+      ``,
+      `Don'ts:\n${list(a.donts)}`,
+      ``,
+      `Dependencies:\n${list(a.dependencies)}`,
+      ``,
+      `Scenarios to cover:\n${list(a.scenarios)}`,
+      ``,
+      `Risks:\n${list(a.risks)}`,
+      ``,
+      `Deliverables:\n${list(a.outputs)}`,
+      ``,
+      `Breakdown:\n${breakdown}`,
+    ].join('\n');
   }
-}
 
+  // ================= PROFILE PICTURE ENHANCEMENT =================
+  async enhanceImage(base64Image: string): Promise<string> {
+    try {
+      const model = this.genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+      });
+
+      const result = await model.generateContent([
+        {
+          text: 'Remove the background from this image and return a clean, circular-ready headshot with transparent background (PNG).',
+        },
+        {
+          inlineData: {
+            mimeType: 'image/png',
+            data: base64Image.split(',')[1],
+          },
+        },
+      ]);
+
+      // Try to read enhanced base64 back
+      const enhanced =
+        result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (enhanced) {
+        return `data:image/png;base64,${enhanced}`;
+      }
+
+      return base64Image; // fallback
+    } catch (err) {
+      console.error('Image enhancement failed:', err);
+      return base64Image;
+    }
+  }
+
+  // ================= IMAGE TO TEXT EXTRACTION =================
+  async extractTextFromImage(base64Image: string): Promise<string> {
+    try {
+      const model = this.genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+      });
+
+      const result = await model.generateContent([
+        {
+          text: 'Extract all readable text from this image as plain text only. Do not summarize or rephrase.',
+        },
+        {
+          inlineData: {
+            mimeType: 'image/png',
+            data: base64Image.split(',')[1],
+          },
+        },
+      ]);
+
+      return result.response.text().trim();
+    } catch (err) {
+      console.error('Text extraction failed:', err);
+      return '';
+    }
+  }
 }

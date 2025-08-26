@@ -13,20 +13,42 @@
     <h2 style="text-shadow: 0px 1px #0f0f0f;">TaskBot 360° Chat</h2>
     <p>Your AI-powered ticket analyzer and assistant.</p>
 
-    <div class="messages">
+    <div class="messages" #chatContainer>
       <div *ngFor="let msg of messages" [ngClass]="msg.type">
-        <pre>{{ msg.text }}</pre>
+        <ng-container [ngSwitch]="msg.type">
+
+          <!-- Normal user/bot text -->
+          <!-- <pre *ngSwitchDefault>{{ msg.text }}</pre> -->
+           <div *ngSwitchDefault class="bot-text">{{ msg.text }}</div>
+
+
+          <!-- Extracted Text Style -->
+          <div *ngSwitchCase="'extracted'" class="extracted-box">
+            <div class="extracted-header">📄 Extracted Text</div>
+            <div class="extracted-content">{{ msg.text }}</div>
+          </div>
+
+        </ng-container>
       </div>
-      <div *ngIf="loading" class="loading">Analyzing…  <img src="../../assets/critical-thinking.gif" width="40" /></div>
+
+      <!-- Loader -->
+      <div *ngIf="loading" class="loading" style="margin-left: 75px;">
+        Processing… <img src="../../assets/critical-thinking.gif" width="40" />
+      </div>
     </div>
 
+
     <div class="chat-input">
-      <input
-        type="text"
-        [(ngModel)]="userInput"
-        placeholder="Paste your ticket or describe the task (press Enter to send)"
-        (keyup.enter)="sendMessage()"
-      />
+      <!-- File input -->
+      <label class="file-upload">
+        <!-- 📎 -->
+        <img src="../../assets/fileupload.png" alt="Upload" width="40" />
+        <input type="file" (change)="onImageUpload($event)" />
+      </label>
+
+      <!-- Text input -->
+      <input type="text" [(ngModel)]="userInput"
+        placeholder="Paste your ticket or describe the task (press Enter to send)" (keyup.enter)="sendMessage()" />
       <button (click)="sendMessage()" [disabled]="loading" class="btn">Send</button>
     </div>
   </div>
