@@ -12,6 +12,7 @@ export interface TicketEstimate {
 export interface TicketAnalysis {
   category: string;
   summary: string;
+  framework: string; // Add this new line
   dos: string[];
   donts: string[];
   dependencies: string[];
@@ -24,6 +25,6 @@ export interface TicketAnalysis {
     confidence: number;
     notes: string;
   };
-  breakdown: { step: string; unit: 'hours' | 'days'; value: number }[]; // ⬅ added
+  breakdown: { step: string; unit: 'hours' | 'days'; value: number }[];
 }
 

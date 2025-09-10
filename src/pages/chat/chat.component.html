@@ -3,7 +3,6 @@
     <img src="../../assets/logotaskbot.jpg" alt="TaskBot Logo" />
   </div>
 
-  <!-- Navigation Links -->
   <nav class="nav-links">
     <a class="navlink" (click)="goToHome()">Home</a>
     <a class="navlink" (click)="logout()">Logout</a>
@@ -17,50 +16,51 @@
       <div *ngFor="let msg of messages" [ngClass]="msg.type">
         <ng-container [ngSwitch]="msg.type">
 
-          <!-- Normal user/bot text -->
-          <!-- <pre *ngSwitchDefault>{{ msg.text }}</pre> -->
           <div *ngSwitchDefault class="bot-text">{{ msg.text }}</div>
 
-
-          <!-- Extracted Text Style -->
           <div *ngSwitchCase="'extracted'" class="extracted-box">
             <div class="extracted-header">📄 Extracted Text</div>
             <div class="extracted-content">{{ msg.text }}</div>
           </div>
 
+          <div *ngSwitchCase="'code'" class="code-box">
+            <div class="code-header">💻 Code Implementation</div>
+            <pre><code class="language-typescript">{{ msg.text }}</code></pre>
+          </div>
+
+          <div *ngSwitchCase="'explanation'" class="explanation-box">
+            <div class="explanation-header">📚 Step-by-Step Explanation</div>
+            <div class="explanation-content" [innerHTML]="msg.text"></div>
+          </div>
         </ng-container>
       </div>
 
-      <!-- Loader -->
       <div *ngIf="loading" class="loading" style="margin-left: 75px;">
-        Processing… <img src="../../assets/critical-thinking.gif" width="40" />
+        {{flag?'Processing image for text extraction...':'Loading...'}}<img src="../../assets/critical-thinking.gif"
+          width="40" />
       </div>
     </div>
 
 
     <div class="chat-input">
-      <!-- File input -->
-      <!-- <label class="file-upload">
-        <img src="../../assets/fileupload.png" alt="Upload" width="40" />
-        <input type="file" (change)="onImageUpload($event)" />
-      </label> -->
       <div class="tooltip-container">
         <label class="file-upload">
           <img src="../../assets/fileupload.png" alt="Upload" width="40" />
-          <input type="file" (change)="onImageUpload($event)" />
+          <input type="file" (change)="onImageUpload($event,true)" />
         </label>
         <span class="tooltip-text">Attach file</span>
       </div>
 
-      <!-- Text input -->
       <input type="text" [(ngModel)]="userInput"
         placeholder="Paste your ticket or describe the task (press Enter to send)" (keyup.enter)="sendMessage()" />
       <button (click)="sendMessage()" [disabled]="loading" class="btn">Send</button>
 
-      <!-- Plus icon with tooltip -->
+      <button (click)="requestCodeImplementation()" [disabled]="loading || !lastAnalysis" class="btn">Get Code</button>
+
       <div class="tooltip-container">
         <span class="plus-icon" (click)="onPlusClick()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>

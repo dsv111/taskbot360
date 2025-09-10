@@ -3,10 +3,19 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { environment } from '../../environments/environment';
 import { TicketAnalysis } from './ticket-analysis.model';
 
+// Interface for code implementation response
+export interface CodeImplementation {
+  code: string;
+  explanation: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AiService {
   private genAI = new GoogleGenerativeAI(environment.geminiApiKey);
 
+  /**
+   * Build analysis prompt
+   */
   private buildPrompt(userText: string): string {
     return `
 You are an expert software project analyst. Analyze the user's ticket/task text and
@@ -15,6 +24,7 @@ return a strict JSON object (no markdown, no code fences) with fields:
 {
   "category": "frontend|backend|database|qa|devops|security|data|other",
   "summary": "one short paragraph",
+  "framework": "angular|react|vue|node|python|other",
   "dos": ["..."],
   "donts": ["..."],
   "dependencies": ["..."],
@@ -28,80 +38,146 @@ return a strict JSON object (no markdown, no code fences) with fields:
   ]
 }
 
-Classification hints:
-- Frontend: UI, Angular/React, components, forms, CSS, accessibility, browser issues.
-- Backend: APIs, services, business logic, auth, logging, performance.
-- Database: schema, migrations, indexing, queries.
-- QA: test plans, automation, regression, acceptance checks.
-- DevOps: CI/CD, infra, env vars, observability, scaling.
-- Security: authn/z, secrets, compliance, data protection.
-- Data: ETL, analytics, reporting, exports.
+Hints:
+- Frontend: UI, Angular/React, components, forms, CSS, browser issues.
+- Backend: APIs, services, business logic, auth, logging.
+- Database: schema, queries, indexing.
+- QA: automation, regression, test plans.
+- DevOps: CI/CD, infra, scaling, monitoring.
+- Security: auth, secrets, compliance.
+- Data: ETL, analytics, reporting.
 
-Make the advice concrete and concise. 
-Ensure breakdown matches the total estimate (sum of breakdown = estimate.value).
+Ensure breakdown sum = estimate.value.
 User ticket:
 """${userText}"""`;
   }
 
-  private buildClarificationPrompt(userQuestion: string, previousResponse: string, history: string, ticketId: string): string {
+  /**
+   * Build clarification prompt
+   */
+  private buildClarificationPrompt(
+    userQuestion: string,
+    previousResponse: string,
+    history: string,
+    ticketId: string
+  ): string {
     return `
-You are an expert software project analyst. The user has asked a follow-up question or seeks clarification about a previous ticket analysis. Below is the conversation history, previous analysis, and the user's question. Provide a concise, conversational response that directly addresses the user's question, referencing the previous analysis where relevant. Do not generate a new ticket analysis unless explicitly requested. Return plain text, not JSON or a full analysis format.
+You are an expert software project analyst. The user asked a follow-up about a previous ticket.
+Respond conversationally and concisely, referencing the previous analysis.
 
-Conversation history (last few messages):
-"""
+Conversation history:
 ${history}
-"""
 
 Previous analysis:
-"""
 ${previousResponse}
-"""
 
-User's question:
-"""
+User question:
 ${userQuestion}
-"""
 
 Ticket ID: ${ticketId}
 `;
   }
 
+  /**
+   * Build intent classification prompt
+   */
   private buildIntentPrompt(userInput: string, history: string): string {
     return `
-Classify the user's input as either:
-- "new_ticket": If it's a new task description, ticket, or unrelated to prior messages.
-- "clarification": If it's a question, doubt, follow-up, or reference to previous analysis (e.g., asking about time, risks, or modifications).
+Classify as:
+- "new_ticket": if describing a new task/ticket.
+- "clarification": if it's a question/follow-up about prior analysis.
 
-Return ONLY the classification as plain text: "new_ticket" or "clarification". No explanations.
+Return ONLY "new_ticket" or "clarification".
 
-Conversation history (last few messages):
-"""
+Conversation history:
 ${history}
-"""
 
 User input:
-"""
 ${userInput}
-"""`;
+`;
   }
 
-  async detectIntent(userInput: string, history: string): Promise<'new_ticket' | 'clarification'> {
+  /**
+   * Build code generation prompt
+   */
+  private buildCodePrompt(analysis: TicketAnalysis, framework: string): string {
+    return `
+You are a senior ${framework} engineer AND a software project tutor.
+Based on this ticket analysis, generate a **complete runnable implementation** along with a **full, step-by-step explanation**.
+
+Instructions for the explanation:
+- Explain each step **clearly**, as if teaching a junior developer.
+- Include reasoning behind **why each step is done**, not just "do this".
+- Include potential pitfalls, common mistakes, and **how to avoid them**.
+- Explain how each file and configuration relates to the project goal.
+- Include **links to official documentation or references** (optional).
+- Organize explanation in **numbered steps**, each step having multiple sentences if needed.
+- Include code snippets inline **where necessary**.
+- Avoid overly short bullet points. Give **rich context** for every step.
+
+Return output ONLY inside the following markers:
+
+<JSON_START>
+{
+  "code": "string with all sections + code fences",
+  "explanation": "markdown explanation with detailed numbered steps"
+}
+<JSON_END>
+
+Sections REQUIRED inside "code":
+### 1) Prerequisites
+### 2) Project Setup (scaffold & install)
+### 3) File Tree
+### 4) Source Files
+### 5) Test(s)
+### 6) Run & Build
+### 7) Notes & Next Steps
+
+Rules:
+- Every file listed in file tree must appear in Source Files.
+- No "..." — include full contents.
+- Use placeholders (<API_BASE_URL>, <SECRET_KEY>) for secrets.
+- At least one test + how to run it.
+- Use idiomatic modern ${framework}.
+- Valid JSON only (no markdown outside JSON).
+
+Ticket analysis:
+${JSON.stringify(analysis, null, 2)}
+  `;
+  }
+
+  /**
+   * Detect intent
+   */
+  async detectIntent(
+    userInput: string,
+    history: string
+  ): Promise<'new_ticket' | 'clarification'> {
     const model = this.genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
-      generationConfig: {
-        temperature: 0.1, // Low for deterministic classification
-        maxOutputTokens: 10,
-        responseMimeType: 'text/plain',
-      },
+      // generationConfig: {
+      //   temperature: 0.1,
+      //   maxOutputTokens: 10,
+      //   responseMimeType: 'text/plain',
+      // },
     });
 
-    const prompt = this.buildIntentPrompt(userInput, history);
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(
+      this.buildIntentPrompt(userInput, history)
+    );
     const intent = result.response.text().trim().toLowerCase();
-
     return intent.includes('clarification') ? 'clarification' : 'new_ticket';
   }
-  async clarifyResponse(userQuestion: string, previousResponse: string, history: string, ticketId: string): Promise<string> {
+
+  /**
+   * Clarification response
+   */
+  async clarifyResponse(
+    userQuestion: string,
+    previousResponse: string,
+    history: string,
+    ticketId: string
+  ): Promise<string> {
     const model = this.genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       generationConfig: {
@@ -112,11 +188,20 @@ ${userInput}
       },
     });
 
-    const prompt = this.buildClarificationPrompt(userQuestion, previousResponse, history, ticketId);
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(
+      this.buildClarificationPrompt(
+        userQuestion,
+        previousResponse,
+        history,
+        ticketId
+      )
+    );
     return result.response.text().trim();
   }
 
+  /**
+   * Analyze a new ticket
+   */
   async analyzeTicket(userText: string): Promise<TicketAnalysis> {
     const model = this.genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
@@ -128,17 +213,16 @@ ${userInput}
       },
     });
 
-    const prompt = this.buildPrompt(userText);
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(this.buildPrompt(userText));
     const text = result.response.text();
 
     try {
-      const parsed = JSON.parse(text) as TicketAnalysis;
-      return parsed;
+      return JSON.parse(text) as TicketAnalysis;
     } catch {
       return {
         category: 'other',
         summary: text.slice(0, 500),
+        framework: 'other',
         dos: [],
         donts: [],
         dependencies: [],
@@ -149,29 +233,86 @@ ${userInput}
           unit: 'hours',
           value: 4,
           confidence: 0.3,
-          notes: 'Fallback (model returned non-JSON)',
+          notes: 'Fallback (invalid JSON)',
         },
         breakdown: [{ step: 'General analysis', unit: 'hours', value: 4 }],
       };
     }
   }
 
+  /**
+   * Get code implementation
+   */
+  async getCodeImplementation(
+    analysis: TicketAnalysis
+  ): Promise<CodeImplementation> {
+    try {
+      const model = this.genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        generationConfig: {
+          temperature: 0.3,
+          topP: 0.9,
+          maxOutputTokens: 6144,
+          responseMimeType: 'text/plain',
+        },
+      });
+
+      const prompt = this.buildCodePrompt(analysis, analysis.framework);
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text().trim();
+
+      // 🔹 1. Try <JSON_START> ... <JSON_END>
+      let match = text.match(/<JSON_START>([\s\S]*?)<JSON_END>/);
+      if (match) {
+        text = match[1].trim();
+      }
+
+      // 🔹 2. Strip markdown fences like ```json ... ```
+      text = text
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+      // 🔹 3. Fallback: extract first {...} block
+      if (!text.startsWith('{')) {
+        const braceMatch = text.match(/\{[\s\S]*\}/);
+        if (braceMatch) {
+          text = braceMatch[0];
+        }
+      }
+
+      return JSON.parse(text) as CodeImplementation;
+    } catch (error) {
+      console.error('Error generating code implementation:', error);
+      return {
+        code: '// Sorry, I could not generate the code. Please try again.',
+        explanation:
+          'There was an error while generating the code implementation.',
+      };
+    }
+  }
+
+  /**
+   * Format analysis for chat display
+   */
   formatForChat(a: TicketAnalysis): string {
     const est = `${a.estimate.value} ${a.estimate.unit} (confidence ${(
       a.estimate.confidence * 100
     ).toFixed(0)}%)`;
 
     const list = (arr: string[]) =>
-      arr?.length ? arr.map((i) => `• ${i.trim()}`).join('\n') : '• —';
+      arr?.length ? arr.map((i) => `• ${i}`).join('\n') : '• —';
 
     const breakdown = a.breakdown?.length
       ? a.breakdown.map((b) => `• ${b.step}: ${b.value} ${b.unit}`).join('\n')
       : '• —';
 
-    const formattedSummary = a.summary
+    const summary = a.summary
       ? a.summary
           .split(/\. +/)
-          .filter((s) => s.trim().length > 0)
+          .filter(Boolean)
           .map((s) => `• ${s.trim()}.`)
           .join('\n')
       : '• —';
@@ -180,7 +321,7 @@ ${userInput}
       `Category: ${a.category.toUpperCase()}`,
       `Estimate: ${est}`,
       ``,
-      `Summary:\n${formattedSummary}`,
+      `Summary:\n${summary}`,
       ``,
       `Do's:\n${list(a.dos)}`,
       ``,
@@ -188,7 +329,7 @@ ${userInput}
       ``,
       `Dependencies:\n${list(a.dependencies)}`,
       ``,
-      `Scenarios to cover:\n${list(a.scenarios)}`,
+      `Scenarios:\n${list(a.scenarios)}`,
       ``,
       `Risks:\n${list(a.risks)}`,
       ``,
@@ -198,15 +339,17 @@ ${userInput}
     ].join('\n');
   }
 
+  /**
+   * Image enhancement (optional feature)
+   */
   async enhanceImage(base64Image: string): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
         model: 'gemini-1.5-flash',
       });
-
       const result = await model.generateContent([
         {
-          text: 'Remove the background from this image and return a clean, circular-ready headshot with transparent background (PNG).',
+          text: 'Remove background and return circular-ready transparent PNG.',
         },
         {
           inlineData: {
@@ -218,27 +361,23 @@ ${userInput}
 
       const enhanced =
         result.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (enhanced) {
-        return `data:image/png;base64,${enhanced}`;
-      }
-
-      return base64Image;
+      return enhanced ? `data:image/png;base64,${enhanced}` : base64Image;
     } catch (err) {
       console.error('Image enhancement failed:', err);
       return base64Image;
     }
   }
 
+  /**
+   * Extract text from image
+   */
   async extractTextFromImage(base64Image: string): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
         model: 'gemini-1.5-flash',
       });
-
       const result = await model.generateContent([
-        {
-          text: 'Extract all readable text from this image as plain text only. Do not summarize or rephrase.',
-        },
+        { text: 'Extract all readable text as plain text only.' },
         {
           inlineData: {
             mimeType: 'image/png',
@@ -246,7 +385,6 @@ ${userInput}
           },
         },
       ]);
-
       return result.response.text().trim();
     } catch (err) {
       console.error('Text extraction failed:', err);

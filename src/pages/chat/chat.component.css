@@ -258,3 +258,103 @@
 .plus-icon:hover {
   opacity: 0.7;
 }
+/* Add a clear margin for all message types */
+.messages div {
+  margin-bottom: 10px;
+}
+
+/* Align user messages to the right */
+.user {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-text {
+  background-color: #007bff; /* A nice blue for the user */
+  color: white;
+  padding: 10px 15px;
+  border-radius: 20px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+/* Align bot messages to the left */
+.bot {
+  display: flex;
+  justify-content: flex-start;
+}
+
+
+/* Style for the extracted text box */
+.extracted-box {
+  background-color: #f8f9fa; /* A very light grey */
+  border: 1px solid #ced4da;
+  border-left: 5px solid #ffc107; /* Yellow border for emphasis */
+  border-radius: 8px;
+  padding: 15px;
+  max-width: 90%;
+  margin-left: 10px;
+}
+
+.extracted-header {
+  font-weight: bold;
+  color: #6c757d;
+  margin-bottom: 5px;
+}
+
+/* Style for the code box */
+.code-box {
+  background-color: #212529; /* Dark background for code */
+  color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  max-width: 90%;
+  margin-left: 10px;
+  overflow-x: auto; /* Ensure code is scrollable if it's too long */
+}
+
+.code-header {
+  font-weight: bold;
+  color: #adb5bd; /* Lighter grey for the header */
+  margin-bottom: 5px;
+}
+
+pre {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap; /* Preserve formatting and wrap lines */
+  word-wrap: break-word;
+}
+
+code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+}
+
+/* Style for the explanation box */
+.explanation-box, .code-box {
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.explanation-header, .code-header {
+  font-weight: 600;
+  color: #1f6feb;
+  margin-bottom: 8px;
+}
+
+/* Improve pre/code display from highlight.js */
+pre code {
+  display: block;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+
+
