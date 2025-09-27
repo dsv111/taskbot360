@@ -154,7 +154,7 @@ ${JSON.stringify(analysis, null, 2)}
     history: string
   ): Promise<'new_ticket' | 'clarification'> {
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       // generationConfig: {
       //   temperature: 0.1,
       //   maxOutputTokens: 10,
@@ -179,7 +179,7 @@ ${JSON.stringify(analysis, null, 2)}
     ticketId: string
   ): Promise<string> {
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         temperature: 0.5,
         topP: 0.9,
@@ -204,7 +204,7 @@ ${JSON.stringify(analysis, null, 2)}
    */
   async analyzeTicket(userText: string): Promise<TicketAnalysis> {
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         temperature: 0.3,
         topP: 0.9,
@@ -248,7 +248,7 @@ ${JSON.stringify(analysis, null, 2)}
   ): Promise<CodeImplementation> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
         generationConfig: {
           temperature: 0.3,
           topP: 0.9,
@@ -345,7 +345,7 @@ ${JSON.stringify(analysis, null, 2)}
   async enhanceImage(base64Image: string): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
       });
       const result = await model.generateContent([
         {
@@ -374,7 +374,7 @@ ${JSON.stringify(analysis, null, 2)}
   async extractTextFromImage(base64Image: string): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.0-flash',
       });
       const result = await model.generateContent([
         { text: 'Extract all readable text as plain text only.' },
