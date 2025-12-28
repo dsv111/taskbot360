@@ -17,7 +17,7 @@ import { HttpClientModule } from '@angular/common/http';
   standalone: true,
   imports: [CommonModule, FormsModule, HttpClientModule, MarkdownModule],
   templateUrl: './chat.component.html',
-  styleUrl: './chat.component.css',
+  styleUrls: ['./chat.component.css'], // --- Corrected to styleUrls
 })
 export class ChatComponent implements AfterViewChecked {
   messages: {
@@ -182,27 +182,26 @@ export class ChatComponent implements AfterViewChecked {
   }
 
   /**
- * Converts AI explanation text into numbered HTML list
- */
-private formatExplanationHtml(text: string): string {
-  if (!text) return '';
+   * Converts AI explanation text into numbered HTML list
+   */
+  private formatExplanationHtml(text: string): string {
+    if (!text) return '';
 
-  // Split text by numbered points like 1., 2., 3.
-  const items = text.split(/\d+\.\s+/).filter(Boolean);
+    // Split text by numbered points like 1., 2., 3.
+    const items = text.split(/\d+\.\s+/).filter(Boolean);
 
-  if (items.length === 0) return text; // fallback to raw text
+    if (items.length === 0) return text; // fallback to raw text
 
-  let html = '<ol>';
-  items.forEach(item => {
-    // Trim and replace newlines inside each point with <br>
-    const cleanItem = item.trim().replace(/\n/g, '<br>');
-    html += `<li>${cleanItem}</li>`;
-  });
-  html += '</ol>';
+    let html = '<ol>';
+    items.forEach((item) => {
+      // Trim and replace newlines inside each point with <br>
+      const cleanItem = item.trim().replace(/\n/g, '<br>');
+      html += `<li>${cleanItem}</li>`;
+    });
+    html += '</ol>';
 
-  return html;
-}
-
+    return html;
+  }
 
   /**
    * Request code & explanation and push nicely formatted markdown messages
@@ -218,6 +217,9 @@ private formatExplanationHtml(text: string): string {
     });
 
     try {
+      // If getCodeImplementation returns Observable, convert it to Promise
+      // const codeData = await this.ai.getCodeImplementation(this.lastAnalysis).toPromise();
+      // If Promise, simply await:
       const codeData = await this.ai.getCodeImplementation(this.lastAnalysis);
 
       // format explanation into readable markdown
@@ -270,7 +272,7 @@ private formatExplanationHtml(text: string): string {
     const trimmed = text.trim();
 
     // Already markdown? If it has proper headers or fenced code, keep it.
-    if (/^#{1,6}\s/m.test(trimmed) || /```/.test(trimmed)) {
+    if (/^#{1,6}\s/m.test(trimmed) || /```
       return trimmed;
     }
 
@@ -329,9 +331,7 @@ private formatExplanationHtml(text: string): string {
         return 'csharp';
       default:
         return '';
-    
-  }
-
+    }
   }
 
   // Returns true when there's non-whitespace text in the input
