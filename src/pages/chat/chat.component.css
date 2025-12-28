@@ -7,6 +7,15 @@
   background: #f4f4f4;
   font-family: monospace;
 }
+.getcode-btn {
+  padding: 10px 16px;
+  border: none;
+  color: white;
+  background: #3498db !important;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
 
 /* 🔹 Logo stays top-left */
 .chat-logo {
@@ -184,6 +193,16 @@
   background: #27ae60;
 }
 
+/* Visual disabled state for chat buttons */
+.chat-input button:disabled,
+.getcode-btn:disabled,
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+  box-shadow: none;
+}
+
 /* 🔹 File upload */
 .file-upload {
   display: flex;
@@ -250,14 +269,21 @@
 }
 
 .plus-icon {
+  background: indigo !important;
+  border: none;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
-  color: #1DA1F2; /* Matches the blue in the image */
-  margin-left: 10px;
+  color: #1DA1F2;
 }
 
-.plus-icon:hover {
-  opacity: 0.7;
+.plus-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #6583a4 !important;
 }
+
 /* Add a clear margin for all message types */
 .messages div {
   margin-bottom: 10px;

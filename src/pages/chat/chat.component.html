@@ -53,20 +53,37 @@
 
       <input type="text" [(ngModel)]="userInput"
         placeholder="Paste your ticket or describe the task (press Enter to send)" (keyup.enter)="sendMessage()" />
-      <button (click)="sendMessage()" [disabled]="loading" class="btn">Send</button>
+      <!-- Start analyzer -->
+      <button (click)="sendMessage()"
+        [disabled]="loading || !inputHasText"
+        [attr.aria-disabled]="loading || !inputHasText"
+        class="btn">
+        Start analyzer
+      </button>
 
-      <button (click)="requestCodeImplementation()" [disabled]="loading || !lastAnalysis" class="btn">Get Code</button>
-
-      <div class="tooltip-container">
-        <span class="plus-icon" (click)="onPlusClick()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </span>
-        <span class="tooltip-text">New Chat</span>
-      </div>
+      <!-- Get Code -->
+      <button (click)="requestCodeImplementation()"
+        [disabled]="loading || !lastAnalysis"
+        [attr.aria-disabled]="loading || !lastAnalysis"
+        class="getcode-btn">
+        Get Code
+      </button>
+<div class="tooltip-container">
+  <button
+    class="plus-icon"
+    (click)="onPlusClick()"
+    [disabled]="!canStartNewChat"
+    [attr.aria-disabled]="!canStartNewChat"
+    [attr.title]="canStartNewChat ? 'New Chat' : 'No active conversation'">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+  </button>
+  <span class="tooltip-text">{{ canStartNewChat ? 'New Chat' : 'No active conversation' }}</span>
+</div>
+      
     </div>
   </div>
 </div>

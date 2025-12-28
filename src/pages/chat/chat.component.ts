@@ -253,6 +253,7 @@ private formatExplanationHtml(text: string): string {
       this.loading = false;
     }
   }
+  
 
   /**
    * Formats the explanation string into neat markdown.
@@ -331,5 +332,14 @@ private formatExplanationHtml(text: string): string {
     
   }
 
+  }
+
+  // Returns true when there's non-whitespace text in the input
+  get inputHasText(): boolean {
+    return !!this.userInput && this.userInput.trim().length > 0;
+  }
+
+  get canStartNewChat(): boolean {
+    return this.messages.length > 0 || !!this.lastAnalysis || !!this.currentTicketId;
   }
 }

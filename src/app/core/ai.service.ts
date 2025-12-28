@@ -38,6 +38,15 @@ return a strict JSON object (no markdown, no code fences) with fields:
   ]
 }
 
+REQUIREMENTS:
+- **Return ONLY valid JSON** and nothing else (no explanation, no markdown, no code fences).
+- **All fields MUST be present**. For unknown values use sensible defaults:
+  - Strings: use \"unknown\".
+  - Arrays: return an array; if no concrete items, include a placeholder like [\"No specific items provided\"].
+  - Estimates: if unknown, set value: 0 and notes: \"unknown\".
+- **'dos' and 'donts' MUST contain at least one item**. If there are no concrete recommendations, add a single item: \"No specific do's provided\" or \"No specific don'ts provided\" respectively.
+- Ensure the \`breakdown\` sum equals \`estimate.value\`. Add notes in estimate if approximation was necessary.
+
 Hints:
 - Frontend: UI, Angular/React, components, forms, CSS, browser issues.
 - Backend: APIs, services, business logic, auth, logging.
@@ -47,7 +56,6 @@ Hints:
 - Security: auth, secrets, compliance.
 - Data: ETL, analytics, reporting.
 
-Ensure breakdown sum = estimate.value.
 User ticket:
 """${userText}"""`;
   }
@@ -154,7 +162,7 @@ ${JSON.stringify(analysis, null, 2)}
     history: string
   ): Promise<'new_ticket' | 'clarification'> {
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       // generationConfig: {
       //   temperature: 0.1,
       //   maxOutputTokens: 10,
@@ -179,7 +187,7 @@ ${JSON.stringify(analysis, null, 2)}
     ticketId: string
   ): Promise<string> {
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.5,
         topP: 0.9,
@@ -204,7 +212,7 @@ ${JSON.stringify(analysis, null, 2)}
    */
   async analyzeTicket(userText: string): Promise<TicketAnalysis> {
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.3,
         topP: 0.9,
@@ -217,7 +225,61 @@ ${JSON.stringify(analysis, null, 2)}
     const text = result.response.text();
 
     try {
-      return JSON.parse(text) as TicketAnalysis;
+      const parsed = JSON.parse(text) as TicketAnalysis;
+      /** Ensure required fields exist and insert placeholders when necessary */
+      const ensureArray = (v: any, placeholder: string) =>
+        Array.isArray(v) && v.length ? v : [placeholder];
+
+      const analysis: Partial<TicketAnalysis> = { ...parsed };
+
+      analysis.category = analysis.category || 'other';
+      analysis.summary =
+        analysis.summary || (userText ? userText.slice(0, 500) : 'unknown');
+      analysis.framework = analysis.framework || 'other';
+      analysis.dos = ensureArray(analysis.dos, "No specific do's provided");
+      analysis.donts = ensureArray(analysis.donts, "No specific don'ts provided");
+      analysis.dependencies = Array.isArray(analysis.dependencies)
+        ? analysis.dependencies
+        : [];
+      analysis.scenarios = Array.isArray(analysis.scenarios) ? analysis.scenarios : [];
+      analysis.risks = Array.isArray(analysis.risks) ? analysis.risks : [];
+      analysis.outputs = Array.isArray(analysis.outputs) ? analysis.outputs : [];
+
+      analysis.estimate = analysis.estimate || {
+        unit: 'hours',
+        value: 0,
+        confidence: 0.0,
+        notes: 'unknown',
+      };
+      // ensure estimate fields exist
+      analysis.estimate.unit = analysis.estimate.unit || 'hours';
+      analysis.estimate.value =
+        typeof analysis.estimate.value === 'number'
+          ? analysis.estimate.value
+          : 0;
+      analysis.estimate.confidence =
+        typeof analysis.estimate.confidence === 'number'
+          ? analysis.estimate.confidence
+          : 0.0;
+      analysis.estimate.notes = analysis.estimate.notes || 'unknown';
+
+      analysis.breakdown = Array.isArray(analysis.breakdown) && analysis.breakdown.length
+        ? analysis.breakdown
+        : [{ step: 'General analysis', unit: 'hours', value: analysis.estimate.value || 0 }];
+
+      // If dos/donts were missing and we inserted placeholders, add a quick note to estimate.notes
+      if (
+        (Array.isArray(parsed.dos) && parsed.dos.length === 0) ||
+        !Array.isArray(parsed.dos) ||
+        (Array.isArray(parsed.donts) && parsed.donts.length === 0) ||
+        !Array.isArray(parsed.donts)
+      ) {
+        analysis.estimate.notes =
+          (analysis.estimate.notes || '') +
+          ' (dos/donts were missing and placeholders inserted)';
+      }
+
+      return analysis as TicketAnalysis;
     } catch {
       return {
         category: 'other',
@@ -248,7 +310,7 @@ ${JSON.stringify(analysis, null, 2)}
   ): Promise<CodeImplementation> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         generationConfig: {
           temperature: 0.3,
           topP: 0.9,
@@ -345,7 +407,7 @@ ${JSON.stringify(analysis, null, 2)}
   async enhanceImage(base64Image: string): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
       });
       const result = await model.generateContent([
         {
@@ -374,7 +436,7 @@ ${JSON.stringify(analysis, null, 2)}
   async extractTextFromImage(base64Image: string): Promise<string> {
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
       });
       const result = await model.generateContent([
         { text: 'Extract all readable text as plain text only.' },
